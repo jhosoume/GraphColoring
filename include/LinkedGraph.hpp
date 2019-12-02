@@ -13,6 +13,7 @@
 
 #include "helper.hpp"
 #include "Path.hpp"
+#include "Timetable.hpp"
 
 /**
  * \class LinkedGraph
@@ -157,10 +158,10 @@ public:
     * @param value Identification of the Vertex to be inserted.
     * @return Nothing, but the LinkedGraph is altered
     */
-    void insertVertex(T value, float weight) {
+    void insertVertex(T value, float weight, int extra = -1) {
         numVertex++;
         // Creates a new Vertex in the heap.
-        Vertex<T> aux = Vertex<T>(value, numVertex - 1, weight);
+        Vertex<T> aux = Vertex<T>(value, numVertex - 1, weight, extra);
         allVertex.push_back(aux);
         if ( numVertex < 0 || numVertex > allVertex.size())
             // Throws an error if the alloc was not properly done.
@@ -287,10 +288,10 @@ public:
            return;
         }
         // Creating and inserting edge
-       Edge aux = Edge(dest_pos, weight);
+       Edge aux = Edge(dest_pos, weight, true);
        allVertex.at(src_pos).ownEdges.push_front(aux);
        allVertex.at(dest_pos).parents.push_front(src_pos);
-       aux = Edge(src_pos, weight);
+       aux = Edge(src_pos, weight, false);
        if (!has_edge(dest_pos, src_pos)) {
            allVertex.at(dest_pos).ownEdges.push_front(aux);
            allVertex.at(src_pos).parents.push_front(dest_pos);
@@ -401,6 +402,70 @@ public:
        }
        outfile << "}" << std::endl;
        outfile.close();
+   }
+
+   /**
+    * Output function to write graph in the dot format to be handled by the
+    * graphviz program and create a visualization of the graph.
+    * @param name Graph name in the .dot file
+    * @param file Name of the file to be saved
+    */
+   void writeUnDirGraphAsDot(std::string name, std::string file) {
+       std::ofstream outfile;
+       outfile.open(file, std::ios::out);
+       outfile << "graph " << name << " {" << std::endl;
+       for (Vertex<T> vert : allVertex) {
+           outfile << vert.get_id() << " ;" << std::endl;
+       }
+       for (Vertex<T> vert : allVertex) {
+           if (vert.has_neighbours()) {
+               for (auto edge : vert.ownEdges) {
+                   if (edge.main) {
+                       outfile << vert.get_id() << " -- "
+                                 << allVertex.at(edge.get_dest()).get_id()
+                                 << " ;"
+                                 << std::endl;
+                    }
+                }
+           }
+       }
+       outfile << "}" << std::endl;
+       outfile.close();
+   }
+
+   /**
+    * Output function to write graph in the dot format to be handled by the
+    * graphviz program and create a visualization of the graph.
+    * @param name Graph name in the .dot file
+    * @param file Name of the file to be saved
+    */
+   void writeColoredGraphAsDot(std::string name, std::string file) {
+       std::ofstream outfile;
+       outfile.open(file, std::ios::out);
+       outfile << "graph " << name << " {" << std::endl;
+       for (Vertex<T> vert : allVertex) {
+           outfile << vert.get_id() << " [ fillcolor = " << color_map.at(colors.at(vert.get_pos()));
+           outfile << " , style = filled ] ;" << std::endl;
+       }
+       for (Vertex<T> vert : allVertex) {
+           if (vert.has_neighbours()) {
+               for (auto edge : vert.ownEdges) {
+                   if (edge.main) {
+                       outfile << vert.get_id() << " -- "
+                                 << allVertex.at(edge.get_dest()).get_id()
+                                 << " ;"
+                                 << std::endl;
+                    }
+                }
+           }
+       }
+       outfile << "}" << std::endl;
+       outfile.close();
+   }
+
+   void printTimetable() {
+       Timetable<T> timetable;
+       timetable.arrange_all_semesters(allVertex);
    }
 
    /**
@@ -774,14 +839,55 @@ void findConnected() {
        outfile.close();
     }
 
+    /**
+     * Colors the graph using a greed algorithm
+     */
+    void greedColoring() {
+        colors.resize(numVertex, -1);
+        std::vector <bool> taken_colors(numVertex, false);
+        // Color for the first vertex
+        colors.at(0) = 0;
+
+        std::cout << std::endl << "- - - - - - - - - - - - - - - - -  " << std::endl;
+        std::cout << "Graph coloring intermediate steps: " << std::endl;
+        for (Vertex<T> vertex : allVertex) {
+            for (int neigh_pos : vertex.getNeighboursPos()) {
+                for (int color_indx = 0; color_indx < numVertex; ++color_indx) {
+                    if (colors.at(neigh_pos) != -1) {
+                        taken_colors.at(colors.at(neigh_pos)) = true;
+                    }
+                }
+            }
+            int color_indx;
+            for (color_indx = 0; color_indx < numVertex; ++color_indx) {
+                if (taken_colors.at(color_indx) == false) {
+                    break;
+                }
+            }
+            colors.at(vertex.get_pos()) = color_indx;
+            std::cout << "Vertex " << vertex.get_id() << " assigned color: [";
+            std::cout << color_map.at(color_indx) << "]" << std::endl;
+            std::fill(taken_colors.begin(), taken_colors.end(), false);
+        }
+        std::cout << "- - - - - - - - - - - - - - - - -  " << std::endl;
+    }
+
+
+
 
 private:
+    std::vector <int> colors;
     size_t numVertex; ///< total number of vertices (Vertex) cointained in the LinkedGraph and stored in allVertex
     size_t numEdges; ///< total number of edges (Edge) stored in the contained vertices (Vertex)
     std::vector< Vertex<T> > allVertex; ///< Vector (std::vector) that stores pointers to all the vertices (Vertex) bound to the graph (LinkedGraph)
     std::vector<bool> marks; ///< Vector that maps all the vertices that was traversed during DFS or for checking connected components
     std::list<std::list<size_t> > groups; ///< Stores the subgraphs that composes the LinkedGraph
     std::vector < std::vector < int > > nextVertPos; // Store the position of the next vertex to go in the longest pathway
+
+    std::vector <std::string> color_map = {
+        "red", "royalblue", "orchid", "limegreen", "gold", "slateblue", "orangered",
+        "lemonchiffon", "greenyellow", "lightsalmon", "cornflowerblue", "darkviolet"
+    };
 
     /**
      * Creates a distance matrix according to the LinkedGraph vertices and edges

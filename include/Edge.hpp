@@ -24,12 +24,20 @@ public:
     : src{src}, dest{dest}, weight{weight}
     {}
 
+    Edge(size_t src, size_t dest, float weight, bool main)
+    : src{src}, dest{dest}, weight{weight}, main{main}
+    {}
+
+    Edge(size_t dest, float weight, bool main)
+    : src{0}, dest{dest}, weight{weight}, main{main}
+    {}
+
     Edge(size_t dest, float weight)
-    : src{0}, dest{dest}, weight{weight}
+    : src{0}, dest{dest}, weight{weight}, main{false}
     {}
 
     Edge()
-    : src{0}, dest{0}, weight{0}
+    : src{0}, dest{0}, weight{0}, main{false}
     {}
     /**
      * Edge destructor.
@@ -64,6 +72,8 @@ public:
                (dest == another_edge.dest) &&
                (weight == another_edge.weight);
     }
+    
+    bool main;
 
 private:
     size_t src;

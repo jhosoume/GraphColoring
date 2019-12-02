@@ -17,7 +17,7 @@ $ make clean
 $ make
 
 Para executar o programa:
-$ ./bin/cic_paths
+$ ./bin/cic_schedule
 
 Diretórios:
 bin : arquivo executável do tradutor
@@ -29,35 +29,29 @@ Makefile : arquivo que auxilia na compilação
 
 
 Para compilar sem utilizar o Makefile, realizar (considerando que
-    os diretórios build e bin foram eliminados):
+    os diretórios build e bin foram deletados):
 $ mkdir build
 $ mkdir bin
+
 $ g++ -std=c++11 --pedantic -O3 -I include -c -o build/helper.o src/helper.cpp
-$ g++ -std=c++11 --pedantic -O3 -I include -c -o build/cic_paths.o src/cic_paths.cpp
+$ g++ -std=c++11 --pedantic -O3 -I include -c -o build/cic_schedule.o src/cic_schedule.cpp
+$ g++ -std=c++11 --pedantic -O3 -I include -c -o build/Time.o src/Time.cpp
 $ g++ -std=c++11 --pedantic -O3 -I include -c -o build/Graph.o src/Graph.cpp
-$ g++ build/helper.o build/cic_paths.o build/Graph.o -o bin/cic_paths -lm
+$ g++ build/helper.o build/cic_schedule.o build/Time.o build/Graph.o -o bin/cic_schedule -lm
 
 ---
 
-O arquivo principal é o cic_paths.cpp  -> nesse arquivo está a montagem do grafo, com as matérias como vértices e os pré-requisitos como arestas, assim como chama as principais funções para cálculo da ordem topológica e a busca pelos dois caminhos críticos.
+O arquivo principal é o cic_schedule.cpp  -> nesse arquivo está a montagem do grafo, com as matérias como vértices com as informações de número de créditos e semestre. As arestas são formadas entre matérias com colisão e, portanto, não podem compartilhar coloração.
 
-A partir da execução do programa são gerados arquivos .dot para visualização pelo graphviz (http://www.graphviz.org/). São gerados dois arquivos, um com as matérias sendo reconhecidas pelos códigos (all_cic_curriculum_codes.dot) e outra pelos nomes (all_cic_curriculum.dot). Para gerar os arquivos com as imagens, é necessária a instalação do graphviz. No ubuntu, pode ser realizado com o seguinte comando no terminal:
+Foi escolhido um algoritmo guloso, já que encontrar o número de coloração mínima não é crítico. Esse algoritmo não garante que o mínimo de cores seja usado, no entanto para o problema apresentado, possui complexidade satisfatória para a solução. A medida que os vértices são coloridos, são apresentados os passos intermediários em tela.
+
+A partir da execução do programa são gerados arquivos .dot para visualização pelo graphviz (http://www.graphviz.org/). São gerados dois arquivos, um com o grafo sem coloração (cic_curriculum.dot) e outro com o grafo colorido (colored_curriculum.dot). Para gerar os arquivos com as imagens, é necessária a instalação do graphviz. No ubuntu, pode ser realizado com o seguinte comando no terminal:
 $ sudo apt-get install graphviz
 Em seguida, realiza os comandos:
-$ dot -Tpng all_cic_curriculum_codes.dot -o all_cic_curriculum_codes.png
-$  dot -Tpng all_cic_curriculum_codes.dot -o all_cic_curriculum_codes.png
+$ dot -Tpng cic_curriculum.dot -o cic_curriculum.png
+$  dot -Tpng colored_curriculum.dot -o colored_curriculum.png
 Para visualização dos arquivos (os arquivos .png serão enviados junto com o programa para evitar a necessiadade de instalar o graphviz):
-$ display all_cic_curriculum.png
-$ display all_cic_curriculum_codes.png
+$ display cic_curriculum.png
+$ display colored_curriculum.png
 
-A ordenação topológica, além de ser uma saída em tela do programa, também pode ser vista em versão extendida, por meio de:
-$ dot -Tpng CIC_TopologicalOrder.dot -o CIC_TopologicalOrder.png
-$ display CIC_TopologicalOrder.png
-
-Além da sequência mais longa, são apresentadas a segunda sequência mais longa de duas formas: a segunda sequência mais longa com vértices (matérias) presentes na sequência mais longa e a sequência mais longa em que todos os vértices não estão presentes na primeira. O valor total e o valor das arestas no caminho são apresentados na tela, assim como os vértices em sequência topolǵica desses caminhos.
-A sequência mais longo é mostrado em azul (first_critical_path.png):
-$ dot -Tpng first_critical_path.dot  -o first_critical_path.png
-$ display first_critical_path.png
-A segunda sequência sem vértices repetidos é apresentada em verde.
-$ dot -Tpng second_critical_path.dot  -o second_critical_path.png
-$ display second_critical_path.png
+A solução ótima de horários é gerada no fim da execução do programa. São apresentados os horários com as matérias por semestre. É dado preferência ao horário matutino, de forma que são evitados os horários da tarde. Além disso, tenta-se separar as matérias de forma que elas não possuam 4 horas seguidas e tenham um dia de espaçamento a cada dois créditos. 

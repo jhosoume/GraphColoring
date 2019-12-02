@@ -8,6 +8,7 @@
 #include <Vertex.hpp>
 #include <Edge.hpp>
 #include <LinkedGraph.hpp>
+#include <Timetable.hpp>
 
 /**
  * Reads a text file that contains information of a direct Graph of chars.

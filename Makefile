@@ -5,7 +5,7 @@ SRCDIR   := src
 BUILDDIR := build
 BINDIR	 := bin
 
-TARGET	 := $(BINDIR)/cic_paths
+TARGET	 := $(BINDIR)/cic_schedule
 
 SRCEXT   := cpp
 SOURCES  := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
